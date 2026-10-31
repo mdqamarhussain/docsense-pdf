@@ -90,25 +90,26 @@ flowchart TD
 How the two FastAPI endpoints connect to the indexing and retrieval steps:
 
 ```mermaid
-flowchart TB
-    API[FastAPI API]
-    API --> UP["POST /upload/"]
-    API --> QUERY["POST /query/"]
-
-    subgraph Indexing["Upload and index"]
-        UP --> LOAD[PyPDFLoader]
+flowchart LR
+    subgraph Upload["POST /upload/"]
+        direction TB
+        FILE[PDF file] --> LOAD[PyPDFLoader]
         LOAD --> SPLIT[Text chunks]
-        SPLIT --> EMBED[FastEmbed embeddings]
-        EMBED --> DB[(Qdrant vector collection)]
+        SPLIT --> EMBED[FastEmbed]
     end
 
-    subgraph Retrieval["Retrieve and answer"]
-        QUERY --> QEMBED[Embed question]
-        QEMBED --> SEARCH[Qdrant top 3]
-        DB --> SEARCH
+    DB[(Qdrant vector collection)]
+
+    subgraph Query["POST /query/"]
+        direction TB
+        QUESTION[User question] --> QEMBED[FastEmbed]
+        QEMBED --> SEARCH[Similarity search]
         SEARCH --> LLM[Ollama model]
-        LLM --> ANSWER[Answer JSON]
+        LLM --> ANSWER[Answer + page numbers]
     end
+
+    EMBED --> DB
+    DB --> SEARCH
 ```
 
 ## Technology stack
